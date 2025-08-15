@@ -34,9 +34,11 @@ app.add_middleware(
 
 from app.routes.automations import router as automations_router  # noqa: E402
 from app.routes.workflow import router as workflow_router  # noqa: E402
+from app.routes.pipeline_config import router as pipeline_config_router  # noqa: E402
 
 app.include_router(automations_router)
 app.include_router(workflow_router)
+app.include_router(pipeline_config_router)
 
 @app.get("/")
 async def root():

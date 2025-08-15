@@ -9,10 +9,17 @@ ALTER TABLE automations ADD COLUMN IF NOT EXISTS last_error TEXT;
 ALTER TABLE automations ADD COLUMN IF NOT EXISTS processing_metadata JSONB;
 ALTER TABLE automations ADD COLUMN IF NOT EXISTS assigned_worker VARCHAR(100);
 
+-- Add classification-specific fields to automations table
+ALTER TABLE automations ADD COLUMN IF NOT EXISTS lob VARCHAR(255);
+ALTER TABLE automations ADD COLUMN IF NOT EXISTS process VARCHAR(255);
+ALTER TABLE automations ADD COLUMN IF NOT EXISTS classification_status VARCHAR(50) DEFAULT 'pending';
+ALTER TABLE automations ADD COLUMN IF NOT EXISTS case_parameters JSONB;
+
 -- Create indexes for workflow queries
 CREATE INDEX IF NOT EXISTS idx_automations_stage_created_at ON automations(stage, created_at);
 CREATE INDEX IF NOT EXISTS idx_automations_processing_started ON automations(processing_started_at) WHERE processing_started_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_automations_assigned_worker ON automations(assigned_worker) WHERE assigned_worker IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_automations_classification_status ON automations(classification_status);
 
 -- Create workflow_events table for audit trail
 CREATE TABLE IF NOT EXISTS workflow_events (
@@ -48,6 +55,21 @@ CREATE TABLE IF NOT EXISTS workflow_stats (
 
 -- Index for workflow stats
 CREATE INDEX IF NOT EXISTS idx_workflow_stats_stage_date ON workflow_stats(stage, date);
+
+-- Create pipeline_configs table for classification configuration
+CREATE TABLE IF NOT EXISTS pipeline_configs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    lob_prompt TEXT NOT NULL,
+    process_prompt TEXT NOT NULL,
+    lob_process_pairs JSONB NOT NULL, -- array of {lob: str, process: str} objects
+    llm_params JSONB NOT NULL, -- e.g., {temperature: float, max_tokens: int} for both Mistral and GPT
+    version INTEGER DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for pipeline_configs
+CREATE INDEX IF NOT EXISTS idx_pipeline_configs_version ON pipeline_configs(version DESC);
 
 -- Function to log workflow events
 CREATE OR REPLACE FUNCTION log_workflow_event(

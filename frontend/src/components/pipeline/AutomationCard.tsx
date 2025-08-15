@@ -74,6 +74,32 @@ export function AutomationCard({ item, onClick, onDelete }: Props) {
           </div>
         )}
         
+        {/* Classification section */}
+        <div className="text-xs border-t pt-2 mt-2">
+          <div className="font-medium text-gray-700 mb-1">Classification</div>
+          {item.classification_status === 'classified' && item.lob && item.process ? (
+            <div className="text-[#008B8B] font-medium">
+              {item.lob} / {item.process}
+            </div>
+          ) : item.classification_status === 'unclassified' ? (
+            <div className="text-amber-600 font-medium">Unclassified</div>
+          ) : item.classification_status === 'error' ? (
+            <div className="text-red-600 font-medium">Error</div>
+          ) : (
+            <div className="text-gray-400">na</div>
+          )}
+          
+          {/* Show OCR markdown preview if available */}
+          {item.case_parameters?.ocr_markdown && (
+            <div 
+              className="text-xs text-blue-600 hover:text-blue-800 cursor-help mt-1 truncate"
+              title={item.case_parameters.ocr_markdown.substring(0, 300) + "..."}
+            >
+              📄 OCR Available
+            </div>
+          )}
+        </div>
+        
         {/* Delete button */}
         <Button
           variant="secondary"

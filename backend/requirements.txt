@@ -2,7 +2,10 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-dotenv==1.0.1
 python-multipart==0.0.20
-pydantic==2.10.5
+pydantic==2.11.7
 pydantic-settings==2.10.1
 azure-storage-blob==12.19.0
-supabase==2.8.0
+supabase==2.18.1
+openai
+mistralai
+httpx==0.28.1 

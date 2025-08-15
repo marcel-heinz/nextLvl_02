@@ -262,6 +262,91 @@ class SupabaseService:
         except Exception as e:
             print(f"Failed to fetch automations by stage {stage} from Supabase: {e}")
             return []
+    
+    async def get_latest_pipeline_config(self) -> Optional[Dict]:
+        """Get the latest pipeline configuration"""
+        if not self.is_configured:
+            # Return None for in-memory mode
+            return None
+            
+        try:
+            result = self.client.table('pipeline_configs').select('*').order('version', desc=True).limit(1).execute()
+            
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            print(f"Failed to fetch pipeline config from Supabase: {e}")
+            return None
+    
+    async def update_automation_fields(self, automation_id: str, update_data: Dict) -> bool:
+        """Update specific fields of an automation"""
+        if not self.is_configured:
+            # Update in-memory storage
+            if automation_id in self.memory_store:
+                automation = self.memory_store[automation_id]
+                for key, value in update_data.items():
+                    if hasattr(automation, key):
+                        setattr(automation, key, value)
+                automation.updated_at = datetime.now()
+                return True
+            return False
+            
+        try:
+            result = self.client.table('automations').update(update_data).eq('id', automation_id).execute()
+            return len(result.data) > 0
+            
+        except Exception as e:
+            print(f"Failed to update automation fields {automation_id} in Supabase: {e}")
+            return False
+    
+    async def create_pipeline_config(self, config_data: Dict) -> Optional[Dict]:
+        """Create a new pipeline configuration"""
+        if not self.is_configured:
+            # For in-memory mode, just return the data with a fake ID
+            config_data['id'] = str(uuid4())
+            return config_data
+            
+        try:
+            result = self.client.table('pipeline_configs').insert(config_data).execute()
+            
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            print(f"Failed to create pipeline config in Supabase: {e}")
+            return None
+    
+    async def get_pipeline_config_history(self, limit: int = 10) -> List[Dict]:
+        """Get pipeline configuration history"""
+        if not self.is_configured:
+            # Return empty list for in-memory mode
+            return []
+            
+        try:
+            result = self.client.table('pipeline_configs').select('*').order('version', desc=True).limit(limit).execute()
+            
+            return result.data if result.data else []
+            
+        except Exception as e:
+            print(f"Failed to fetch pipeline config history from Supabase: {e}")
+            return []
+    
+    async def delete_all_pipeline_configs(self) -> bool:
+        """Delete all pipeline configurations"""
+        if not self.is_configured:
+            # For in-memory mode, always return True
+            return True
+            
+        try:
+            result = self.client.table('pipeline_configs').delete().neq('id', '').execute()
+            return True
+            
+        except Exception as e:
+            print(f"Failed to delete pipeline configs from Supabase: {e}")
+            return False
 
 
 # Singleton instance
